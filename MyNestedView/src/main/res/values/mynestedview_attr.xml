@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="MyNestedView">
+        <attr name="gravity" >
+            <flag name="left" value="0x03" />
+            <flag name="right" value="0x05" />
+            <flag name="center_horizontal" value="0x01" />
+        </attr>
+    </declare-styleable>
+
+    <declare-styleable name="MyNestedView_Layout">
+        <attr name="layout_gravity" >
+            <flag name="left" value="0x03" />
+            <flag name="right" value="0x05" />
+            <flag name="center_horizontal" value="0x01" />
+        </attr>
+    </declare-styleable>
+</resources>
