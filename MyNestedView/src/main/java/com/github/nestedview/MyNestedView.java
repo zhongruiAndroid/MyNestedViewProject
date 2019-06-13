@@ -11,15 +11,18 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
-import static android.widget.FrameLayout.LayoutParams.UNSPECIFIED_GRAVITY;
 
 /***
- *   created by android on 2019/6/13
+ *   created by zhongruiAndroid on 2019/6/13
  */
 public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
     private NestedScrollingParentHelper helper;
     private int canScrollHeight = 0;
     private int childAllHeight=0;
+    private final int AREA_TOP=1;
+    private final int AREA_CENTER=2;
+    private final int AREA_BOTTOM=3;
+    private int scrollArea=AREA_TOP;
 
     public MyNestedView(Context context) {
         super(context);
