@@ -7,9 +7,10 @@ import android.support.v4.view.NestedScrollingParent2;
 import android.support.v4.view.NestedScrollingParentHelper;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 
 
 /***
@@ -18,22 +19,28 @@ import android.widget.FrameLayout;
 public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
     private NestedScrollingParentHelper helper;
     private int canScrollHeight = 0;
-    private int childAllHeight=0;
-    private final int AREA_TOP=1;
-    private final int AREA_CENTER=2;
-    private final int AREA_BOTTOM=3;
-    private int scrollArea=AREA_TOP;
+    private int childAllHeight = 0;
+    private final int AREA_TOP = 1;
+    private final int AREA_CENTER = 2;
+    private final int AREA_BOTTOM = 3;
+    private int scrollArea = AREA_TOP;
+
+    private int mGravity = Gravity.LEFT;
 
     public MyNestedView(Context context) {
         super(context);
+        init(context,null);
     }
+
 
     public MyNestedView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        init(context,attrs);
     }
 
     public MyNestedView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        init(context,attrs);
     }
 
     public NestedScrollingParentHelper getHelper() {
@@ -42,7 +49,11 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
         }
         return helper;
     }
-
+    private void init(Context context, AttributeSet attrs) {
+        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.MyNestedView);
+        mGravity = typedArray.getInt(R.styleable.MyNestedView_Layout_layout_gravity,  Gravity.LEFT);
+        typedArray.recycle();
+    }
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 //        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
@@ -81,6 +92,8 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         childAllHeight = 0;
         canScrollHeight = 0;
+        final int width = right - left;
+
         int childCount = getChildCount();
         if (childCount == 0) {
             return;
@@ -95,18 +108,43 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
             if (childView.getVisibility() == GONE) {
                 continue;
             }
+            LayoutParams layoutParams = (LayoutParams) childView.getLayoutParams();
+            int gravity = layoutParams.gravity;
+            if(gravity<0){
+                gravity=mGravity;
+            }
+
             int childWidth = childView.getMeasuredWidth();
             int childHeight = childView.getMeasuredHeight();
-            childView.layout(
-                    paddingLeft,
-                    childAllHeight+paddingTop,
-                    childWidth+paddingLeft,
-                    childHeight+childAllHeight+paddingTop
-            );
-            childAllHeight+=childHeight;
-            canScrollHeight+=childHeight;
+
+            int childLeft;
+            int childTop = childAllHeight + paddingTop;
+//            int childRight = childWidth + paddingLeft;
+//            int childBottom = childHeight + childAllHeight + paddingTop;
+
+            final int layoutDirection = getLayoutDirection();
+            final int absoluteGravity = Gravity.getAbsoluteGravity(gravity, layoutDirection);
+            switch (absoluteGravity & Gravity.HORIZONTAL_GRAVITY_MASK) {
+                case Gravity.CENTER_HORIZONTAL:
+                    childLeft=(width-childWidth)/2+layoutParams.leftMargin-layoutParams.rightMargin;
+                    break;
+                case Gravity.RIGHT:
+                    childLeft=width-paddingRight-layoutParams.rightMargin-childWidth;
+                    break;
+                case Gravity.LEFT:
+                default:
+                    childLeft=paddingLeft+layoutParams.leftMargin;
+                    break;
+            }
+
+
+
+            childView.layout(childLeft, childTop, childLeft+childWidth, childTop+childHeight);
+
+            childAllHeight += childHeight;
+            canScrollHeight += childHeight;
         }
-        canScrollHeight-=getMeasuredHeight();
+        canScrollHeight -= getMeasuredHeight();
     }
 
     @Override
@@ -114,15 +152,13 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
         super.addView(child, index, params);
 
     }
-
     @Override
     public ViewGroup.LayoutParams generateLayoutParams(AttributeSet attrs) {
         return new LayoutParams(getContext(), attrs);
     }
-    public static class LayoutParams extends MarginLayoutParams{
+    public static class LayoutParams extends MarginLayoutParams {
         public static final int UNSPECIFIED_GRAVITY = -1;
         public int gravity = UNSPECIFIED_GRAVITY;
-
         public LayoutParams(Context c, AttributeSet attrs) {
             super(c, attrs);
             TypedArray typedArray = c.obtainStyledAttributes(attrs, R.styleable.MyNestedView_Layout);
@@ -138,7 +174,7 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
         public LayoutParams(ViewGroup.LayoutParams source) {
             super(source);
         }
-        public LayoutParams(int width, int height,LayoutParams source) {
+        public LayoutParams(int width, int height, LayoutParams source) {
             super(width, height);
             this.gravity = source.gravity;
         }
@@ -178,5 +214,18 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
     @Override
     public boolean dispatchNestedPreFling(float velocityX, float velocityY) {
         return super.dispatchNestedPreFling(velocityX, velocityY);
+    }
+
+    public void setGravity(int gravity) {
+        if(gravity!=Gravity.LEFT||gravity!=Gravity.RIGHT||gravity!=Gravity.CENTER_HORIZONTAL){
+            return;
+        }
+        if (mGravity != gravity) {
+            mGravity = gravity;
+            requestLayout();
+        }
+    }
+    public int getGravity() {
+        return mGravity;
     }
 }
