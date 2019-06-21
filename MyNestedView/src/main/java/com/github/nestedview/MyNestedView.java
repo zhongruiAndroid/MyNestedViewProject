@@ -6,11 +6,17 @@ import android.support.annotation.NonNull;
 import android.support.v4.view.NestedScrollingParent2;
 import android.support.v4.view.NestedScrollingParentHelper;
 import android.support.v4.view.ViewCompat;
+import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 /***
@@ -24,8 +30,12 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
     private final int AREA_CENTER = 2;
     private final int AREA_BOTTOM = 3;
     private int scrollArea = AREA_TOP;
-
     private int mGravity = Gravity.LEFT;
+
+
+    private Map<View,ViewHelper> viewHelperMap;
+
+
 
     public MyNestedView(Context context) {
         super(context);
@@ -56,6 +66,7 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
     }
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+
 //        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         int widthMode = MeasureSpec.getMode(widthMeasureSpec);
         int widthSize = MeasureSpec.getSize(widthMeasureSpec);
@@ -71,12 +82,24 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
         int resultHeight = 0;
         for (int i = 0; i < childCount; i++) {
             View childView = getChildAt(i);
+            ViewHelper viewHelper = viewHelperMap.get(childView);
+            viewHelper.position=i;
+            viewHelper.view=childView;
+
             if (childView.getVisibility() == GONE) {
+                viewHelper.isGone=true;
                 continue;
             }
             measureChildWithMargins(childView, widthMeasureSpec, 0, heightMeasureSpec, 0);
             int measuredWidth = childView.getMeasuredWidth();
             int measuredHeight = childView.getMeasuredHeight();
+
+
+            viewHelper.childViewHeight=measuredHeight;
+            if(childView instanceof RecyclerView){
+                viewHelper.isRecyclerView=true;
+            }
+            viewHelper.beforeViewTotalHeight=resultHeight;
 
             resultWidth = Math.max(resultWidth, measuredWidth);
             resultHeight += measuredHeight;
@@ -84,8 +107,8 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
 
 
         setMeasuredDimension(
-                widthMode == MeasureSpec.EXACTLY ? widthSize : resultWidth,
-                heightMode == MeasureSpec.EXACTLY ? heightSize : resultHeight);
+                widthMode == MeasureSpec.EXACTLY ? widthSize : Math.min(resultWidth,widthSize),
+                heightMode == MeasureSpec.EXACTLY ? heightSize : Math.min(resultHeight,heightSize));
     }
 
     @Override
@@ -150,7 +173,12 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
     @Override
     public void addView(View child, int index, ViewGroup.LayoutParams params) {
         super.addView(child, index, params);
-
+        ViewHelper viewHelper=new ViewHelper();
+        viewHelper.view=child;
+        if(viewHelperMap==null){
+            viewHelperMap=new HashMap<>();
+        }
+        viewHelperMap.put(child,viewHelper);
     }
     @Override
     public ViewGroup.LayoutParams generateLayoutParams(AttributeSet attrs) {
@@ -205,15 +233,42 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
 
     @Override
     public void onNestedPreScroll(@NonNull View target, int dx, int dy, @NonNull int[] consumed, int type) {
+        if(viewHelperMap==null||viewHelperMap.size()==0){
+            return;
+        }
+        ViewHelper viewHelper = viewHelperMap.get(target);
+        if(viewHelper==null){
+            return;
+        }
+
+        boolean hiddenTopView=dy>0&&getScrollY()<viewHelper.beforeViewTotalHeight;
+        boolean showTopView=dy<0&&getScrollY()>0&&ViewCompat.canScrollVertically(target,-1)==false;
+        if(hiddenTopView||showTopView){
+            scrollBy(0,dy);
+            consumed[1]=dy;
+        }
     }
 
     @Override
     public void onNestedScroll(@NonNull View target, int dxConsumed, int dyConsumed, int dxUnconsumed, int dyUnconsumed, int type) {
+        if(dyUnconsumed>0&&getScrollY()<canScrollHeight){
+            scrollBy(0,dyUnconsumed);
+        }
+
     }
 
     @Override
     public boolean dispatchNestedPreFling(float velocityX, float velocityY) {
         return super.dispatchNestedPreFling(velocityX, velocityY);
+    }
+
+
+    @Override
+    public void scrollTo(int x, int y) {
+        if(y<=0){
+            y=0;
+        }
+        super.scrollTo(x, y);
     }
 
     public void setGravity(int gravity) {
