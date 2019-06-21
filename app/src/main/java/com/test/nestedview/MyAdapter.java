@@ -1,7 +1,11 @@
 package com.test.nestedview;
 
+import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.DisplayMetrics;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,6 +36,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int position) {
         viewHolder.textView.setText(list.get(position));
+        Log.i("=====","====="+list.get(position));
     }
     @Override
     public int getItemCount() {
@@ -51,6 +56,13 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             textView= (TextView) itemView;
+            textView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,dp2px(textView.getContext(),40)));
+            textView.setGravity(Gravity.CENTER_VERTICAL);
+        }
+        private int dp2px(Context context,int dp){
+            return (int) (context.getResources().getDisplayMetrics().density*dp+0.5f);
         }
     }
+
+
 }

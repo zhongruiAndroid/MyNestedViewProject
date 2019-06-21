@@ -9,16 +9,6 @@ public class ViewHelper {
     View view;
     int childViewHeight;
     int position;
-    boolean isRecyclerView;
     boolean isGone;
     int beforeViewTotalHeight;
-
-    @Override
-    public boolean equals(Object obj) {
-        if(obj==this){
-            return true;
-        }
-        return super.equals(obj);
-
-    }
 }

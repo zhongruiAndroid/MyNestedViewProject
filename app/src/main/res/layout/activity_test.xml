@@ -31,7 +31,7 @@
             android:layout_height="40dp"
             android:background="@color/c_press_bt"
             android:gravity="center"
-            android:text="adfads"
+            android:text="Android"
             />
         <TextView
             android:layout_width="200dp"
@@ -100,5 +100,11 @@
             android:text="IOS"
             app:layout_gravity="center_horizontal"
             />
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/rv3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            >
+        </android.support.v7.widget.RecyclerView>
     </com.github.nestedview.MyNestedView>
 </LinearLayout>

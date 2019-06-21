@@ -11,6 +11,7 @@ import java.util.List;
 public class TestActivity extends AppCompatActivity {
     RecyclerView rv;
     RecyclerView rv2;
+    RecyclerView rv3;
     MyAdapter adapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,6 +21,19 @@ public class TestActivity extends AppCompatActivity {
         initView();
         initRv1();
         initRv2();
+        initRv3();
+    }
+
+    private void initRv3() {
+        rv3=findViewById(R.id.rv3);
+        MyAdapter adapter=new MyAdapter(android.R.layout.test_list_item);
+        List<String> list=new ArrayList<>();
+        for (int i = 0; i <30; i++) {
+            list.add("第三个recyclerview的第"+i+"个item");
+        }
+        adapter.setList(list);
+        rv3.setLayoutManager(new LinearLayoutManager(this));
+        rv3.setAdapter(adapter);
     }
 
     private void initRv2() {

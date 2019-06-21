@@ -84,7 +84,6 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
             View childView = getChildAt(i);
             ViewHelper viewHelper = viewHelperMap.get(childView);
             viewHelper.position=i;
-            viewHelper.view=childView;
 
             if (childView.getVisibility() == GONE) {
                 viewHelper.isGone=true;
@@ -96,9 +95,6 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
 
 
             viewHelper.childViewHeight=measuredHeight;
-            if(childView instanceof RecyclerView){
-                viewHelper.isRecyclerView=true;
-            }
             viewHelper.beforeViewTotalHeight=resultHeight;
 
             resultWidth = Math.max(resultWidth, measuredWidth);
@@ -242,20 +238,20 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
         }
 
         //上滑动View，将如果view上面还有view可以显示，则开始隐藏上面的view
-        boolean hiddenTopView=dy>0&&getScrollY()<viewHelper.beforeViewTotalHeight;
-        if(hiddenTopView){
+        boolean needHiddenTopView=getScrollY()<viewHelper.beforeViewTotalHeight&&dy>0;
+        if(needHiddenTopView){
             //修复过度偏移
             dy=Math.min(dy,viewHelper.beforeViewTotalHeight-getScrollY());
         }
-        //下滑动View,如果view到顶部了，则开始滑动parent显示上面的view
-        boolean showTopView=dy<0&&getScrollY()>0&&ViewCompat.canScrollVertically(target,-1)==false;
-        //下滑动view，直到view的上面视图将要漏出来的时候,才滑动自身，否者滑动parent
+        //如果view到顶部了，下滑动View,则开始滑动parent,显示上面的view
+        boolean needShowTopView=ViewCompat.canScrollVertically(target,-1)==false&&dy<0&&getScrollY()>0;
+        //如果view没到顶部，下滑动view，滑动parent，直到view的上面视图将要漏出来的时候,才滑动自身
         boolean needScrollParent=dy<0&&getScrollY()>viewHelper.beforeViewTotalHeight;
         if(needScrollParent){
             //修复过度偏移  此时dy是负数，所以比较最大值
             dy=Math.max(dy,viewHelper.beforeViewTotalHeight-getScrollY());
         }
-        if(hiddenTopView||showTopView||needScrollParent){
+        if(needHiddenTopView||needShowTopView||needScrollParent){
             scrollBy(0,dy);
             consumed[1]=dy;
         }
