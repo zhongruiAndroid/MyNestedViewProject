@@ -265,12 +265,12 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
         }
 
     }
-
     @Override
-    public boolean dispatchNestedPreFling(float velocityX, float velocityY) {
-        return super.dispatchNestedPreFling(velocityX, velocityY);
-    }
+    public boolean onNestedPreFling(View target, float velocityX, float velocityY) {
+//        super.onNestedPreFling(target, velocityX, velocityY);
 
+        return false;
+    }
 
     @Override
     public void scrollTo(int x, int y) {
