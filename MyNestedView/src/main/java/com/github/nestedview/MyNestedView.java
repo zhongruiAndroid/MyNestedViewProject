@@ -10,8 +10,12 @@ import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.MotionEvent;
+import android.view.VelocityTracker;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.widget.Scroller;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,8 +36,26 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
     private int scrollArea = AREA_TOP;
     private int mGravity = Gravity.LEFT;
 
+    private VelocityTracker velocityTracker;
+    private Scroller scroller;
+
 
     private Map<View,ViewHelper> viewHelperMap;
+    private List<RecyclerView> recyclerViewList;
+    private View lastFlingView;
+
+    private Map<View,ViewHelper> getViewHelperMap(){
+        if(viewHelperMap==null){
+            viewHelperMap=new HashMap<>();
+        }
+        return viewHelperMap;
+    }
+    private List getRecyclerViewList(){
+        if(recyclerViewList==null){
+            recyclerViewList=new ArrayList<>();
+        }
+        return recyclerViewList;
+    }
 
 
 
@@ -63,6 +85,9 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.MyNestedView);
         mGravity = typedArray.getInt(R.styleable.MyNestedView_Layout_layout_gravity,  Gravity.LEFT);
         typedArray.recycle();
+
+        scroller=new Scroller(getContext());
+
     }
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -175,6 +200,10 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
             viewHelperMap=new HashMap<>();
         }
         viewHelperMap.put(child,viewHelper);
+
+        if(child instanceof RecyclerView){
+            getRecyclerViewList().add(child);
+        }
     }
     @Override
     public ViewGroup.LayoutParams generateLayoutParams(AttributeSet attrs) {
@@ -260,16 +289,96 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
 
     @Override
     public void onNestedScroll(@NonNull View target, int dxConsumed, int dyConsumed, int dxUnconsumed, int dyUnconsumed, int type) {
-        if(dyUnconsumed>0&&getScrollY()<canScrollHeight){
+        Log.i("=========",dyConsumed+"========="+dyUnconsumed);
+        /*if(dyUnconsumed>0&&getScrollY()<canScrollHeight){
             scrollBy(0,dyUnconsumed);
+        }*/
+        if(dyUnconsumed!=0){
+            scroller.fling(0,getScrollY(),0, (int) getVelocityTracker().getYVelocity(),0,0,Integer.MAX_VALUE,Integer.MAX_VALUE);
+            invalidate();
         }
-
     }
     @Override
     public boolean onNestedPreFling(View target, float velocityX, float velocityY) {
-//        super.onNestedPreFling(target, velocityX, velocityY);
+        lastFlingView=target;
+        if(viewHelperMap==null){
+            return false;
+        }
+        ViewHelper viewHelper = viewHelperMap.get(target);
+        if(viewHelper==null){
+            return false;
+        }
+        if(getScrollY()<viewHelper.beforeViewTotalHeight){
 
+        }
+
+        //recyclerview滑动底，然后父亲滑，
         return false;
+    }
+
+    @Override
+    public boolean onNestedFling(View target, float velocityX, float velocityY, boolean consumed) {
+//        Log.i("=====","=====onNestedFling"+consumed+"============="+velocityY);
+        Log.e("----","===ccc==onNestedFling"+target.getTag());
+        return super.onNestedFling(target, velocityX, velocityY, consumed);
+    }
+
+    @Override
+    public boolean dispatchNestedPreFling(float velocityX, float velocityY) {
+        Log.e("----","===bbb==dispatchNestedPreFling");
+        return super.dispatchNestedPreFling(velocityX, velocityY);
+    }
+    @Override
+    public boolean dispatchNestedFling(float velocityX, float velocityY, boolean consumed) {
+        Log.e("----","===aaa==dispatchNestedPreFling");
+        return super.dispatchNestedFling(velocityX, velocityY,consumed);
+    }
+
+    @Override
+    public void computeScroll() {
+
+        if (scroller.computeScrollOffset()) {
+
+        }
+
+
+        if(lastFlingView==null){
+            return;
+        }
+        int index = getRecyclerViewList().indexOf(lastFlingView);
+        if(index==-1||index==(getRecyclerViewList().size()-1)){
+            return;
+        }
+        ViewHelper viewHelper = getViewHelperMap().get(getRecyclerViewList().get((index + 1)));
+    }
+    private void initVelocityTracker(){
+        if(velocityTracker==null){
+            velocityTracker=VelocityTracker.obtain();
+        }else{
+            velocityTracker.clear();
+        }
+    }
+    private VelocityTracker getVelocityTracker(){
+        if(velocityTracker==null){
+            velocityTracker=VelocityTracker.obtain();
+        }
+        return velocityTracker;
+    }
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        switch (ev.getAction()){
+            case MotionEvent.ACTION_DOWN:
+                initVelocityTracker();
+            break;
+            case MotionEvent.ACTION_MOVE:
+                getVelocityTracker().addMovement(ev);
+            break;
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                getVelocityTracker().computeCurrentVelocity(1000,ViewConfiguration.get(getContext()).getScaledMaximumFlingVelocity());
+            break;
+        }
+        return super.dispatchTouchEvent(ev);
     }
 
     @Override

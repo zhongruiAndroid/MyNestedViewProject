@@ -71,5 +71,6 @@ public class TestActivity extends AppCompatActivity {
         rv.setLayoutManager(new LinearLayoutManager(this));
         rv.setAdapter(adapter);
 
+        rv.setTag("tag:111111111111");
     }
 }

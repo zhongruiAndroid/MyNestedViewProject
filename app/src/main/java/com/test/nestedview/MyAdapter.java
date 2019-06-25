@@ -36,7 +36,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int position) {
         viewHolder.textView.setText(list.get(position));
-        Log.i("=====","====="+list.get(position));
+//        Log.i("=====","====="+list.get(position));
     }
     @Override
     public int getItemCount() {
