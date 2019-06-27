@@ -11,4 +11,8 @@ public class ViewHelper {
     int position;
     boolean isGone;
     int beforeViewTotalHeight;
+
+    public int getIncludeOwnHeight(){
+        return childViewHeight+beforeViewTotalHeight;
+    }
 }
