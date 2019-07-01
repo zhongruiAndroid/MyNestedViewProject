@@ -2,7 +2,6 @@ package com.github.nestedview;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v4.view.NestedScrollingParent2;
 import android.support.v4.view.NestedScrollingParentHelper;
@@ -27,7 +26,7 @@ import java.util.Map;
 /***
  *   created by zhongruiAndroid on 2019/6/13
  */
-public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
+public class MyNestedView3 extends ViewGroup implements NestedScrollingParent2 {
     private NestedScrollingParentHelper helper;
     private int canScrollHeight = 0;
     private int childAllHeight = 0;
@@ -63,18 +62,18 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
     }
 
 
-    public MyNestedView(Context context) {
+    public MyNestedView3(Context context) {
         super(context);
         init(context, null);
     }
 
 
-    public MyNestedView(Context context, AttributeSet attrs) {
+    public MyNestedView3(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(context, attrs);
     }
 
-    public MyNestedView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public MyNestedView3(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(context, attrs);
     }
@@ -393,11 +392,13 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
         Log.e("----", "===ccc==000dispatchNestedPreFling");
         return super.onNestedFling(target, velocityX, velocityY, consumed);
     }
+
     @Override
     public boolean dispatchNestedPreFling(float velocityX, float velocityY) {
         Log.e("----", "===ccc==111dispatchNestedPreFling");
         return super.dispatchNestedPreFling(velocityX, velocityY);
     }
+
     @Override
     public boolean dispatchNestedFling(float velocityX, float velocityY, boolean consumed) {
         Log.e("----", "===ccc==222dispatchNestedFling");
