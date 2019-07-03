@@ -122,8 +122,9 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
                 continue;
             }
             measureChildWithMargins(childView, widthMeasureSpec, 0, heightMeasureSpec, 0);
-            int measuredWidth = childView.getMeasuredWidth();
-            int measuredHeight = childView.getMeasuredHeight();
+            LayoutParams lp = (LayoutParams) childView.getLayoutParams();
+            int measuredWidth = childView.getMeasuredWidth()+lp.leftMargin+lp.rightMargin;
+            int measuredHeight = childView.getMeasuredHeight()+lp.topMargin+lp.bottomMargin;
 
 
             viewHelper.childViewHeight = measuredHeight;
@@ -301,50 +302,95 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
 
     @Override
     public void onNestedScroll(@NonNull View target, int dxConsumed, int dyConsumed, int dxUnconsumed, int dyUnconsumed, int type) {
+/*
         if(dyUnconsumed<=0){
             //不考虑view下滑的情况
-//            return;
-        }
-        //根据距离获取view,判断是否能向上滑动
-        if (getViewHelperList() == null || getViewHelperList().size() < 2) {
-            if (dyUnconsumed > 0 && getScrollY() < canScrollHeight) {
+            return;
+        }*/
+        if(dyUnconsumed>0){
+            //根据距离获取view,判断是否能向上滑动
+            if (getViewHelperList() == null || getViewHelperList().size() < 2) {
+                if (dyUnconsumed > 0 && getScrollY() < canScrollHeight) {
+                    scrollBy(0, dyUnconsumed);
+                }
+                return;
+            }
+            if(dyUnconsumed>0&&getScrollY() >= canScrollHeight){
+                //如果当前容器滚动到最底部，判断最后一个view是否可以滑动自身
+                if(getViewHelperList().size()==0){
+                    return;
+                }
+                ViewHelper viewHelper = getViewHelperList().get(getViewHelperList().size() - 1);
+                if(ViewCompat.canScrollVertically(viewHelper.view,1)==false){
+                    canNotTopScroll=true;
+                if(viewHelper.view instanceof RecyclerView){
+                    ((RecyclerView)viewHelper.view).stopScroll();
+                }
+                    dyUnconsumed=0;
+                }
+//                viewHelper.view.scrollBy(0,dyUnconsumed);
+                return;
+            }
+            ViewHelper viewHelper = getCurrentTopView(dyUnconsumed);
+            if (viewHelper == null) {
+                scrollBy(0, dyUnconsumed);
+                return;
+            }
+            if (ViewCompat.canScrollVertically(viewHelper.view, 1)) {
+                int scrollOffset = dyUnconsumed;
+                //容器滑动跨过两个view的情况
+                if (getScrollY() < viewHelper.beforeViewTotalHeight) {
+                    int i = viewHelper.beforeViewTotalHeight - getScrollY();
+                    scrollOffset = scrollOffset - i;
+                    scrollBy(0, i);
+                }
+                viewHelper.view.scrollBy(0, scrollOffset);
+            }else{
                 scrollBy(0, dyUnconsumed);
             }
             return;
         }
-        if(dyUnconsumed>0&&getScrollY() >= canScrollHeight){
-            //如果当前容器滚动到最底部，判断最后一个view是否可以滑动自身
-            if(getViewHelperList().size()==0){
-                return;
-            }
-            ViewHelper viewHelper = getViewHelperList().get(getViewHelperList().size() - 1);
-            if(ViewCompat.canScrollVertically(viewHelper.view,1)==false){
-                canNotTopScroll=true;
-                if(viewHelper.view instanceof RecyclerView){
-                    ((RecyclerView)viewHelper.view).stopScroll();
+        if(dyUnconsumed<0){
+            //根据距离获取view,判断是否能向上滑动
+            if (getViewHelperList() == null || getViewHelperList().size() < 2) {
+                if (dyUnconsumed < 0 && getScrollY() >0) {
+                    scrollBy(0, dyUnconsumed);
                 }
                 return;
             }
-            viewHelper.view.scrollBy(0,dyUnconsumed);
-            return;
-        }
-        ViewHelper viewHelper = getCurrentTopView(dyUnconsumed);
-        if (viewHelper == null) {
-            scrollBy(0, dyUnconsumed);
-            return;
-        }
-        if (ViewCompat.canScrollVertically(viewHelper.view, 1)) {
-            int scrollOffset = dyUnconsumed;
-            //容器滑动跨过两个view的情况
-            if (getScrollY() < viewHelper.beforeViewTotalHeight) {
-                int i = viewHelper.beforeViewTotalHeight - getScrollY();
-                scrollOffset = scrollOffset - i;
-                scrollBy(0, i);
+            if(dyUnconsumed<0&&getScrollY() <=0){
+                //如果当前容器滚动到最底部，判断最后一个view是否可以滑动自身
+                if(getViewHelperList().size()==0){
+                    return;
+                }
+                ViewHelper viewHelper = getViewHelperList().get(getViewHelperList().size() - 1);
+                if(ViewCompat.canScrollVertically(viewHelper.view,-1)==false){
+                    canNotTopScroll=true;
+                    dyUnconsumed=0;
+                }
+                viewHelper.view.scrollBy(0,dyUnconsumed);
+                return;
             }
-            viewHelper.view.scrollBy(0, scrollOffset);
-        }else{
-            scrollBy(0, dyUnconsumed);
+            ViewHelper viewHelper = getCurrentTopView(dyUnconsumed);
+            if (viewHelper == null) {
+                scrollBy(0, dyUnconsumed);
+                return;
+            }
+            if (ViewCompat.canScrollVertically(viewHelper.view, 1)) {
+                int scrollOffset = dyUnconsumed;
+                //容器滑动跨过两个view的情况
+                if (getScrollY() < viewHelper.beforeViewTotalHeight) {
+                    int i = viewHelper.beforeViewTotalHeight - getScrollY();
+                    scrollOffset = scrollOffset - i;
+                    scrollBy(0, i);
+                }
+                viewHelper.view.scrollBy(0, scrollOffset);
+            }else{
+                scrollBy(0, dyUnconsumed);
+            }
+            return;
         }
+
 
     }
 
@@ -358,10 +404,10 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
         while (flag) {
             int middle = (start + end) / 2;
             viewHelper = getViewHelperList().get(middle);
-            if (viewHelper.beforeViewTotalHeight <= scrollY && scrollY < viewHelper.getIncludeOwnHeight()) {
+            if (viewHelper.beforeViewTotalHeight <= scrollY && scrollY <= viewHelper.getIncludeOwnHeight()) {
                 flag=false;
             } else if (viewHelper.beforeViewTotalHeight > scrollY) {
-                end = middle - 1;
+                end   = middle - 1;
             } else {
                 start = middle + 1;
             }
@@ -371,61 +417,31 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
 
     @Override
     public boolean onNestedPreFling(View target, float velocityX, float velocityY) {
-        lastFlingView = target;
-        if (viewHelperMap == null) {
-            return false;
-        }
-        ViewHelper viewHelper = viewHelperMap.get(target);
-        if (viewHelper == null) {
-            return false;
-        }
-        if (getScrollY() < viewHelper.beforeViewTotalHeight) {
-
-        }
-
-        //recyclerview滑动底，然后父亲滑，
+        parentFling(target,velocityY);
         return false;
     }
-
-    @Override
-    public boolean onNestedFling(View target, float velocityX, float velocityY, boolean consumed) {
-//        Log.i("=====","=====onNestedFling"+consumed+"============="+velocityY);
-        Log.e("----", "===ccc==000dispatchNestedPreFling");
-        return super.onNestedFling(target, velocityX, velocityY, consumed);
+    private void parentFling(View target,float velocityY) {
+        lastFlingView=target;
+        scroller.fling(0, getScrollY(), 0, (int) velocityY, 0, 0, Integer.MIN_VALUE, Integer.MAX_VALUE);
+        invalidate();
     }
-    @Override
-    public boolean dispatchNestedPreFling(float velocityX, float velocityY) {
-        Log.e("----", "===ccc==111dispatchNestedPreFling");
-        return super.dispatchNestedPreFling(velocityX, velocityY);
-    }
-    @Override
-    public boolean dispatchNestedFling(float velocityX, float velocityY, boolean consumed) {
-        Log.e("----", "===ccc==222dispatchNestedFling");
-        return super.dispatchNestedFling(velocityX, velocityY, consumed);
-    }
-
     @Override
     public void computeScroll() {
         if (scroller.computeScrollOffset()) {
-            int currY = scroller.getCurrY();
-//            scrollTo(0, currY);
-//            invalidate();
-        }
-        super.computeScroll();
-
-        if (lastFlingView == null) {
-            return;
+            //上滑
+            if(lastFlingView!=null&&ViewCompat.canScrollVertically(lastFlingView,1)){
+                int currY = scroller.getCurrY();
+            }
         }
     }
 
     private void initVelocityTracker() {
-        if (velocityTracker == null) {
+        if (velocityTracker == null){
             velocityTracker = VelocityTracker.obtain();
-        } else {
+        }else{
             velocityTracker.clear();
         }
     }
-
     private VelocityTracker getVelocityTracker() {
         if (velocityTracker == null) {
             velocityTracker = VelocityTracker.obtain();
@@ -437,6 +453,7 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
     public boolean dispatchTouchEvent(MotionEvent ev) {
         switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
+                lastFlingView=null;
                 initVelocityTracker();
                 break;
             case MotionEvent.ACTION_MOVE:
@@ -445,15 +462,28 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
                 getVelocityTracker().computeCurrentVelocity(1000, ViewConfiguration.get(getContext()).getScaledMaximumFlingVelocity());
+                float yVelocity = getVelocityTracker().getYVelocity();
+                scroller.fling(getScrollX(),getScrollY(),0, (int) yVelocity,0,Integer.MAX_VALUE,0,Integer.MAX_VALUE);
+                computeFling();
                 break;
         }
         return super.dispatchTouchEvent(ev);
+    }
+
+    private void computeFling() {
+        while (lastFlingView!=null&&scroller.computeScrollOffset()){
+            int currY = scroller.getCurrY();
+            lastFlingView.scrollBy(0,currY);
+        }
     }
 
     @Override
     public void scrollTo(int x, int y) {
         if (y <= 0) {
             y = 0;
+        }
+        if (y > canScrollHeight) {
+            y = canScrollHeight;
         }
         super.scrollTo(x, y);
         /*if (lastFlingView != null) {
