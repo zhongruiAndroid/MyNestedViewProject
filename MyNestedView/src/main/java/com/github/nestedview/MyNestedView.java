@@ -2,14 +2,12 @@ package com.github.nestedview;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v4.view.NestedScrollingParent2;
 import android.support.v4.view.NestedScrollingParentHelper;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
@@ -24,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 
-/***
+/***当前无法正常的惯性滑动
  *   created by zhongruiAndroid on 2019/6/13
  */
 public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
@@ -252,7 +250,7 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
 
     @Override
     public boolean onStartNestedScroll(@NonNull View child, @NonNull View target, int axes, int type) {
-        if (axes == ViewCompat.SCROLL_AXIS_VERTICAL) {
+        if (axes == ViewCompat.SCROLL_AXIS_VERTICAL&&type==ViewCompat.TYPE_TOUCH) {
             return true;
         } else {
             return false;
@@ -286,7 +284,7 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
             //修复过度偏移
             dy = Math.min(dy, viewHelper.beforeViewTotalHeight - getScrollY());
         }
-        //如果view到顶部了，下滑动View,则开始滑动parent,显示上面的view
+        //如果view滑动到自己的顶部了，下滑动View,则开始滑动parent,显示上面的view
         boolean needShowTopView = ViewCompat.canScrollVertically(target, -1) == false && dy < 0 && getScrollY() > 0;
         //如果view显示底部，下滑动view，滑动parent ，直到view的底部视图将要滑出去的时候,才滑动自身
         boolean needScrollParent = dy < 0 && getScrollY() > viewHelper.beforeViewTotalHeight;
@@ -302,8 +300,8 @@ public class MyNestedView extends ViewGroup implements NestedScrollingParent2 {
 
     @Override
     public void onNestedScroll(@NonNull View target, int dxConsumed, int dyConsumed, int dxUnconsumed, int dyUnconsumed, int type) {
-/*
-        if(dyUnconsumed<=0){
+
+      /*  if(dyUnconsumed<=0){
             //不考虑view下滑的情况
             return;
         }*/

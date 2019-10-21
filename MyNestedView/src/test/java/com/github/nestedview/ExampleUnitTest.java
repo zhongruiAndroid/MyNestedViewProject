@@ -20,6 +20,11 @@ public class ExampleUnitTest {
         assertEquals(4, 2 + 2);
     }
     @Test
+    public void as3df() {
+        double pow = Math.pow(2, 4);
+        System.out.println("==="+pow);
+    }
+    @Test
     public void asdf() {
         Map<String,TestBean> map=new HashMap<String,TestBean>();
         List<TestBean> list=new ArrayList<>();

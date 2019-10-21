@@ -5,7 +5,7 @@ import android.view.View;
 /***
  *   created by android on 2019/6/21
  */
-public class ViewHelper {
+class ViewHelper {
     View view;
     int childViewHeight;
     int position;
